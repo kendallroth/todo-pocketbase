@@ -17,6 +17,16 @@
         @keyup.enter="handleAddTodo"
         @update:model-value="(value) => (addTodoText = value)"
       />
+      <LayoutStack class="mx-4" direction="row">
+        <VChip
+          v-for="status in statusChips"
+          :color="selectedStatus === status.value ? 'primary' : undefined"
+          :key="status.label"
+          @click="getTodos(status.value)"
+        >
+          {{ status.label }}
+        </VChip>
+      </LayoutStack>
       <template v-if="!loadingTodos">
         <VListItem v-for="todo in todos" :key="todo.id">
           <template #prepend>
@@ -88,11 +98,29 @@ interface Todo {
 const todos = ref<Todo[]>([]);
 const loadingTodos = ref(true);
 
-const getTodos = async () => {
+const selectedStatus = ref<undefined | true | false>(undefined);
+const statusChips = [
+  { label: "All", value: undefined },
+  { label: "Completed", value: true },
+  { label: "Outstanding", value: false },
+];
+
+const getTodos = async (completeFilter?: true | false | undefined) => {
   loadingTodos.value = true;
+  selectedStatus.value = completeFilter;
+
   try {
+    let filter = "";
+    if (completeFilter === true) {
+      filter = "complete = true";
+    } else if (completeFilter === false) {
+      filter = "complete = false";
+    }
+
     // TODO: Update to use TS definition
-    const records = await pocketbase.collection("todos").getFullList(100, { sort: "-created" });
+    const records = await pocketbase
+      .collection("todos")
+      .getFullList(100, { filter, sort: "-created" });
     todos.value = records.map(mapPocketbaseTodo);
   } catch (e) {
     notifyError(getError(e));

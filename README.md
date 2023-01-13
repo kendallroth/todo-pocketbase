@@ -1,5 +1,22 @@
 # todo-pocketbase
 
+Simple Todo app to learn Pocketbase (with Vue).
+
+<div align="center">
+  <img src="./assets/todos-pocketbase.png" width="400" />
+</div>
+
+## Features
+
+- Pocketbase authentication (login, logout)
+- Manage todo items
+- Secure access to todo items
+
+### Ideas
+
+- Support user registration
+- Support real-time updates
+
 ## Pocketbase
 
 ### Development

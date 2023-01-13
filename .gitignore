@@ -6,6 +6,5 @@ dist/
 node_modules/
 
 pocketbase/pb_data
-pocketbase/pb_migrations
 
 .env

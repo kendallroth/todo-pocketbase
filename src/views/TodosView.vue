@@ -144,7 +144,7 @@ onMounted(() => {
 const addTodoText = ref("");
 
 const handleAddTodo = async () => {
-  const text = addTodoText.value;
+  const text = addTodoText.value.trim();
   if (!text) return;
 
   try {
@@ -163,7 +163,6 @@ const handleToggleTodo = async (todo: Todo, complete: boolean) => {
   try {
     await pocketbase.collection("todos").update(todo.id, { complete });
 
-    // TODO: Figure out with realtime subscriptions???
     const localTodo = todos.value.find((t) => t.id === todo.id);
     if (localTodo) {
       localTodo.complete = complete;
@@ -179,7 +178,6 @@ const handleDeleteTodo = async (todo: Todo) => {
   try {
     await pocketbase.collection("todos").delete(todo.id);
 
-    // TODO: Figure out with realtime subscriptions???
     todos.value = todos.value.filter((t) => t.id !== todo.id);
 
     deleteTodoConfirmation.value = null;

@@ -9,6 +9,7 @@
       "~components/*": ["src/components/*"],
       "~composables": ["src/composables"],
       "~config": ["src/config.ts"],
+      "~pocketbase": ["src/pocketbase"],
       "~plugins/*": ["src/plugins/*"],
       "~router": ["src/router"],
       "~services": ["src/services"],

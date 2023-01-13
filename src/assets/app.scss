@@ -1,0 +1,10 @@
+body,
+html {
+  font-family: Mulish;
+}
+
+// Vuetify
+.v-btn {
+  // Prevent automatically capitalizing button text (can be reversed by adding 'text-uppercase' class)
+  text-transform: none;
+}

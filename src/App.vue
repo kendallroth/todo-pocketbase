@@ -1,85 +1,105 @@
-<script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
-    </div>
-  </header>
-
-  <RouterView />
+  <VApp>
+    <VAppBar color="primary">
+      <VIcon class="ml-4" color="white" :icon="mdiCheck" />
+      <VToolbarTitle>ToDo Pocketbase</VToolbarTitle>
+      <template #append>
+        <VMenu v-if="userStore.user" :offset="4">
+          <template #activator="{ props }">
+            <VBtn v-bind="props" icon>
+              <VAvatar color="white">{{ userStore.user.name?.charAt(0) ?? "?" }}</VAvatar>
+            </VBtn>
+          </template>
+          <VList :min-width="200">
+            <VListItem class="font-weight-bold">{{ userStore.user.name }}</VListItem>
+            <VListItem @click="logoutDialog.show">Logout</VListItem>
+          </VList>
+        </VMenu>
+        <ConfirmDialog
+          :model-value="logoutDialog.open.value"
+          title="Logout?"
+          @cancel="logoutDialog.hide"
+          @confirm="handleLogout"
+        >
+          Are you sure you want to logout?
+        </ConfirmDialog>
+      </template>
+    </VAppBar>
+    <VMain class="app-main">
+      <LoginView v-if="page === 'login'" @login-success="handleLogin" />
+      <RegisterView v-if="page === 'register'" />
+      <TodosView v-if="page === 'lists'" />
+      <TodosView v-if="page === 'list-items'" />
+    </VMain>
+    <TheAppSnackbar />
+  </VApp>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
-}
+<script setup lang="ts">
+import { mdiCheck } from "@mdi/js";
+import { onMounted, ref } from "vue";
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
+import TheAppSnackbar from "~components/single/TheAppSnackbar.vue";
+import { ConfirmDialog } from "~components/dialog";
+import { useDialog } from "~composables";
+import pocketbase from "~pocketbase";
+import { useUserStore } from "~stores";
+import TodosView from "~views/TodosView.vue";
+import LoginView from "~views/LoginView.vue";
+import RegisterView from "~views/RegisterView.vue";
 
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
-}
+type AuthPages = "login" | "register";
+type AppPages = "lists" | "list-items";
+type Pages = AuthPages | AppPages;
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
-}
+const page = ref<Pages>("login");
 
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
+const userStore = useUserStore();
 
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
+pocketbase.authStore.onChange((token, model) => {
+  console.log("App.authListener", model);
 
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
+  if (model === null) {
+    userStore.clearAccount();
+    page.value = "login";
+    return;
   }
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
+  // Ensure user store is updated when auth model changes
+  userStore.setAccount({
+    created: model.created,
+    email: model.email,
+    id: model.id,
+    name: model.name ?? null,
+    verified: model.verified ?? false,
+  });
+}, true);
 
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
+onMounted(() => {
+  if (pocketbase.authStore.isValid) {
+    page.value = "lists";
+  } else {
+    page.value = "login";
   }
+});
 
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
+const handleLogin = () => {
+  // NOTE: Updating store is handled automatically by Pocketbase
+  page.value = "lists";
+};
 
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
+const logoutDialog = useDialog();
+
+const handleLogout = () => {
+  logoutDialog.hide();
+  pocketbase.authStore.clear();
+  userStore.clearAccount();
+  page.value = "login";
+};
+</script>
+
+<style lang="scss" scoped>
+.app-main {
+  display: flex;
 }
 </style>
